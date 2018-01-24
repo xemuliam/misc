@@ -11,7 +11,7 @@ if "Any Trustlets?" then
       -->[yes] "Register Trustlet"
     else
       -->[no] if "Delete trustlet?" then
-        -->[yes] "Delete Trustlet"
+        ->[yes] "Delete Trustlet"
       else
         -->[no] (*)
       endif
