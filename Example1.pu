@@ -1,6 +1,6 @@
 @startuml
 
-(*) --> "Login"
+(*) -> "Login"
 
 if "Any Trustlets?" then
   -->[yes] "Show Trustlets list"
