@@ -1,0 +1,35 @@
+@startuml
+ actor Developer
+ cloud "AWS Cloud"{
+  node "S3" {
+    [TrustHub UI]
+    [TrustHub Code Files]
+  }
+  database "DynamoDB" {
+    frame "TrustHub DataModel" {
+      [Tables]
+    }
+  }
+  node "APIG" {
+    [APIs]
+  }
+  node "Cognito" {
+    [Users]
+  }
+  node "Lambda" {
+    [Lambdas]
+  }
+}
+ Developer -> [TrustHub UI]
+[TrustHub UI] -> Developer
+[TrustHub UI] -> Users
+Users --> [TrustHub UI]
+[TrustHub UI] --> [APIs]
+[APIs] --> [TrustHub UI]
+[APIs] -> [Lambdas]
+[Lambdas] -> [APIs]
+[Lambdas] --> [TrustHub Code Files]
+[TrustHub Code Files] --> [Lambdas]
+[Lambdas] --> [Tables]
+[Tables] --> [Lambdas]
+@enduml
