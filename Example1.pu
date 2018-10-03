@@ -19,6 +19,7 @@ if "Any Trustlets?" then
   endif
 else
   ->[no] "Register Trustlet"
+  --> "Test"
 endif
 
 "Register Trustlet" --> "Show Trustlets list"
