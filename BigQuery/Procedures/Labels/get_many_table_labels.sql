@@ -1,6 +1,4 @@
 create or replace procedure get_many_table_labels(p_table_name STRING, p_label_names_array ARRAY<STRING>, OUT p_labels_array ARRAY<STRUCT<name STRING, value STRING>>)
-OPTIONS(
-  strict_mode=true)
 begin
   declare labels array<struct<name string, value string>> default [];
 
