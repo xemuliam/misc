@@ -1,75 +1,81 @@
 create or replace procedure get_delta_partitions(
-  p_ard STRUCT<table_name STRING,
-  event_timestamp_column_name STRING>,
-  p_pdm STRUCT<table_name STRING,
-  partition_column_name STRING,
-  event_timestamp_column_name STRING>,
-  
-  OUT p_partitions_struct STRUCT<max_ard_ts TIMESTAMP, dates ARRAY<DATE>>
+  _in_derived_table STRUCT<
+    table_name STRING,
+    event_timestamp_column_name STRING
+  >,
+  _in_in_base_table STRUCT<
+    table_name STRING,
+    partition_column_name STRING,
+    event_timestamp_column_name STRING
+  >,
+  OUT _out_delta_info_struct STRUCT<
+    max_event_ts TIMESTAMP,
+    dates_array ARRAY<DATE>
+  >
 )
 begin
-  DECLARE max_ard_ts_str, last_job_start_str string DEFAULT null;
-  DECLARE max_ard_ts timestamp DEFAULT null;
-  declare pdm_partitions struct<count_all int64, dates array<date>>;
+  DECLARE max_event_ts_str, last_batch_start_str string DEFAULT null;
+  DECLARE max_event_ts timestamp DEFAULT null;
+  declare base_table_partitions struct<count_all int64, dates_array array<date>>;
   declare labels array<struct<name string, value string>> default [];
-  declare pdm struct<dataset_name string, table_name string>;
+  declare base_table_name_struct struct<dataset_name string, table_name string>;
 
-  -- parse pdm table name into structure
-  call sdp_internal.parse_table_name(
-    p_pdm.table_name,
-    pdm
+  -- parse base table name into structure
+  call parse_table_name(
+    _in_base_table.table_name,
+    base_table_name_struct
   );
   -- attempt to get ard table labels
-  call sdp_internal.get_many_table_labels(
-    p_ard.table_name,
-    ['last-job-start', 'max-ard-ts'],
+  call get_many_table_labels(
+    _in_derived_table.table_name,
+    ['last-job-start-ts', 'max-event-ts'],
     labels
   );
-  -- get max-ard-ts value from label
-  set max_ard_ts_str = (
+  -- get max-event-ts value from label
+  set max_event_ts_str = (
     select any_value(value)
     from unnest(labels)
-    where name = 'max-ard-ts'
+    where name = 'max-event-ts'
   );
   -- if max ard ts is empty then get value from real data
-  if max_ard_ts_str is not null then
-    SET max_ard_ts = parse_timestamp('%Y-%m-%d__%H-%M-%S', max_ard_ts_str);
+  if max_event_ts_str is not null then
+    SET max_event_ts = parse_timestamp('%Y-%m-%d__%H-%M-%S', max_event_ts_str);
   else
     execute immediate """
-      SELECT ifnull(max("""||p_ard.event_timestamp_column_name||"""), TIMESTAMP('1991-08-24'))
-      FROM `"""||p_ard.table_name||"""`
-    """ into max_ard_ts;
+      SELECT ifnull(max("""||_in_derived_table.event_timestamp_column_name||"""), TIMESTAMP('1991-08-24'))
+      FROM `"""||_in_derived_table.table_name||"""`
+    """ into max_event_ts;
   end if;
-  -- get last-job-start value from label
-  set last_job_start_str = (
+  -- get last-job-start-ts value from label
+  set last_batch_start_str = (
     select any_value(value)
     from unnest(labels)
-    where name = 'last-job-start'
+    where name = 'last-job-start-ts'
   );
 
   -- get partitions from metadata using last job start label
-  if last_job_start_str is not null then
+  if last_batch_start_str is not null then
     execute immediate """
       select (count(1), array_agg(parse_date('%Y%m%d', if(regexp_contains(partition_id, r'^\\d{8}$'), partition_id, null)) ignore nulls))
-      from `"""||pdm.dataset_name||""".INFORMATION_SCHEMA.PARTITIONS`
-      where table_name = '"""||pdm.table_name||"""'
+      from `"""||base_table_name_struct.dataset_name||""".INFORMATION_SCHEMA.PARTITIONS`
+      where table_name = '"""||base_table_name_struct.table_name||"""'
       and storage_tier = 'ACTIVE'
-      and last_modified_time > parse_timestamp('%Y-%m-%d__%H-%M-%S', '"""||last_job_start_str||"""')
-    """ into pdm_partitions;
+      and last_modified_time > parse_timestamp('%Y-%m-%d__%H-%M-%S', '"""||last_batch_start_str||"""')
+    """ into base_table_partitions;
   end if;
 
   -- if no label or no "numeric" pertitions then get partitoons from the real data
-  if last_job_start_str is null or pdm_partitions.count_all > ifnull(array_length(pdm_partitions.dates), 0) then
+  if last_batch_start_str is null or base_table_partitions.count_all > ifnull(array_length(base_table_partitions.dates_array), 0) then
     execute immediate """
       select (-1,
         (
-          SELECT ARRAY_AGG(DISTINCT DATE("""||p_pdm.partition_column_name||"""))
-          FROM `"""||p_pdm.table_name||"""`
-          WHERE """||p_pdm.event_timestamp_column_name||""" > TIMESTAMP_SUB('"""||max_ard_ts||"""', INTERVAL 100 MINUTE)
+          SELECT ARRAY_AGG(DISTINCT DATE("""||_in_base_table.partition_column_name||"""))
+          FROM `"""||_in_base_table.table_name||"""`
+          WHERE """||_in_base_table.event_timestamp_column_name||""" > TIMESTAMP_SUB('"""||max_event_ts||"""', INTERVAL 100 MINUTE)
         )
       )
-    """ into pdm_partitions;
+    """ into base_table_partitions;
   end if;
 
-  set p_partitions_struct = (max_ard_ts, pdm_partitions.dates);
+  set _out_delta_info_struct = (max_event_ts, base_table_partitions.dates_array);
 end
