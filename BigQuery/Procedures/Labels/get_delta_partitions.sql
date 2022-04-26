@@ -25,7 +25,7 @@ begin
     _in_base_table.table_name,
     base_table_name_struct
   );
-  -- attempt to get ard table labels
+  -- attempt to get derived table labels
   call get_many_table_labels(
     _in_derived_table.table_name,
     ['last-job-start-ts', 'max-event-ts'],
@@ -37,7 +37,7 @@ begin
     from unnest(labels)
     where name = 'max-event-ts'
   );
-  -- if max ard ts is empty then get value from real data
+  -- if max derived ts is empty then get value from real data
   if max_event_ts_str is not null then
     SET max_event_ts = parse_timestamp('%Y-%m-%d__%H-%M-%S', max_event_ts_str);
   else
