@@ -1,6 +1,4 @@
 create or replace procedure parse_table_name(p_table_name STRING, OUT p_table_struct STRUCT<dataset_name STRING, table_name STRING>)
-OPTIONS(
-  strict_mode=true)
 begin
   declare dataset_name, table_name string default null;
   declare names_array default (select array_reverse(split(replace(p_table_name, '`', ''), '.')));
