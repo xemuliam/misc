@@ -1,4 +1,4 @@
-create or replace procedure set_many_table_labels(
+create or replace procedure set_many_table_labels (
   _in_table_name STRING,
   _in_labels_array ARRAY<
     STRUCT<
@@ -7,6 +7,7 @@ create or replace procedure set_many_table_labels(
     >
   >
 )
+
 begin
   declare labels array<struct<name string, value string>> default [];
 
