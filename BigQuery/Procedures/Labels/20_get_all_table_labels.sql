@@ -7,6 +7,7 @@ create or replace procedure get_all_table_labels(
     >
   >
 )
+
 begin
   declare table_info struct<dataset_name string, table_name string>;
   declare get_labels default '';
