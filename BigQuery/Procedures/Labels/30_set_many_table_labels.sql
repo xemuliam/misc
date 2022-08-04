@@ -27,7 +27,7 @@ begin
     alter table """||_in_table_name||"""
     SET OPTIONS (
       labels="""||(
-        select '['||string_agg('STRUCT("'||l.name||'", "'||l.value||'")', ', ')||']'
+        select '[' || ifnull(string_agg('STRUCT("'||l.name||'", "'||l.value||'")', ', '), '') || ']'
         from unnest(labels) l
       )||"""
     )"""
