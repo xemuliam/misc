@@ -7,7 +7,7 @@ create or replace procedure get_delta_partitions (
     table_name string,
     partition_column_name string,
     ingest_timestamp_column_name string,
-    additional_filter_condition STRING
+    additional_filter_condition string
   >,
   out _out_delta_info_struct struct<
     max_ingest_ts timestamp,
