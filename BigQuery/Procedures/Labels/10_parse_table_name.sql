@@ -1,8 +1,9 @@
 create or replace procedure parse_table_name (
-  _in_table_name STRING,
-  OUT _out_table_struct STRUCT<
-    dataset_name STRING,
-    table_name STRING
+  _in_table_name string,
+  
+  out _out_table_struct struct<
+    dataset_name string,
+    table_name string
   >
 )
 
@@ -14,7 +15,7 @@ begin
   set dataset_name = ifnull(nullif(names_array[safe_ordinal(3)], '')||'.', '') || nullif(names_array[safe_ordinal(2)], '');
 
   assert (table_name is not null and dataset_name is not null)
-    as 'Dataset or table name is missing';
+    as 'dataset or table name is missing';
 
   set _out_table_struct = (dataset_name, table_name);
 end
