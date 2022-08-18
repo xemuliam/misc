@@ -1,7 +1,8 @@
 create or replace procedure get_table_label (
-  _in_table_name STRING,
-  _in_label_name STRING,
-  OUT _out_label_value STRING
+  _in_table_name string,
+  _in_label_name string,
+  
+  out _out_label_value string
 )
 
 begin
