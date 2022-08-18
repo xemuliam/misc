@@ -1,4 +1,4 @@
-create or replace procedure get_delta_partitions (
+create or replace procedure get_delta_partitions_ext (
   _in_derived_table struct<
     table_name string,
     ingest_timestamp_column_name string
