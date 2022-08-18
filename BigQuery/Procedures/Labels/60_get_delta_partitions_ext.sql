@@ -16,7 +16,7 @@ create or replace procedure get_delta_partitions_ext (
 )
 
 begin
-  declare max_ingest_ts_str, last_batch_start_str string default null;
+  declare max_ingest_ts_str, last_batch_start_ts_str string default null;
   declare max_ingest_ts timestamp default null;
   declare base_table_partitions struct<count_all int64, dates_array array<date>>;
   declare labels array<struct<name string, value string>> default [];
@@ -49,25 +49,25 @@ begin
     """ into max_ingest_ts;
   end if;
   -- get last-batch-start-ts value from label
-  set last_batch_start_str = (
+  set last_batch_start_ts_str = (
     select any_value(value)
     from unnest(labels)
     where name = 'last-batch-start-ts'
   );
 
   -- get partitions from metadata using last batch start label
-  if last_batch_start_str is not null then
+  if last_batch_start_ts_str is not null then
     execute immediate """
       select (count(1), array_agg(parse_date('%y%m%d', if(regexp_contains(partition_id, r'^\\d{8}$'), partition_id, null)) ignore nulls))
       from `"""||base_table_name_struct.dataset_name||""".information_schema.partitions`
       where table_name = '"""||base_table_name_struct.table_name||"""'
       and storage_tier = 'active'
-      and last_modified_time > parse_timestamp('%y-%m-%d__%h-%m-%s', '"""||last_batch_start_str||"""')
+      and last_modified_time > parse_timestamp('%y-%m-%d__%h-%m-%s', '"""||last_batch_start_ts_str||"""')
     """ into base_table_partitions;
   end if;
 
   -- if no label or no "numeric" pertitions then get partitions from the real data
-  if last_batch_start_str is null or base_table_partitions.count_all > ifnull(array_length(base_table_partitions.dates_array), 0) then
+  if last_batch_start_ts_str is null or base_table_partitions.count_all > ifnull(array_length(base_table_partitions.dates_array), 0) then
     execute immediate """
       select (-1,
         (
