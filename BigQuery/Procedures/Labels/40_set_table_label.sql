@@ -1,7 +1,7 @@
 create or replace procedure set_table_label (
-  _in_table_name STRING,
-  _in_label_name STRING,
-  _in_label_value STRING
+  _in_table_name string,
+  _in_label_name string,
+  _in_label_value string
 )
 
 begin
