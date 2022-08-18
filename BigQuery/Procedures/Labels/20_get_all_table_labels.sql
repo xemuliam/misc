@@ -1,9 +1,10 @@
 create or replace procedure get_all_table_labels(
-  _in_table_name STRING,
-  OUT _out_labels_array ARRAY<
-    STRUCT<
-      name STRING,
-      value STRING
+  _in_table_name string,
+  
+  out _out_labels_array array<
+    struct<
+      name string,
+      value string
     >
   >
 )
@@ -16,7 +17,7 @@ begin
 
   execute immediate """
     select ifnull(any_value(option_value), '')
-    from `"""||table_info.dataset_name||""".INFORMATION_SCHEMA.TABLE_OPTIONS`
+    from `"""||table_info.dataset_name||""".information_schema.table_options`
     where table_name = '"""||table_info.table_name||"""'
       and option_name = 'labels'
   """ into get_labels;
