@@ -6,7 +6,8 @@ create or replace procedure get_delta_partitions (
   _in_base_table struct<
     table_name string,
     partition_column_name string,
-    ingest_timestamp_column_name string
+    ingest_timestamp_column_name string,
+    additional_filter_condition STRING
   >,
   out _out_delta_info_struct struct<
     max_ingest_ts timestamp,
@@ -72,7 +73,8 @@ begin
         (
           select array_agg(distinct date("""||_in_base_table.partition_column_name||"""))
           from `"""||_in_base_table.table_name||"""`
-          where """||_in_base_table.ingest_timestamp_column_name||""" > timestamp_sub('"""||max_ingest_ts||"""', interval 100 minute)
+          where true"""||ifnull( " and "||_in_base_table.additional_filter_condition, '')||"""
+            and """||_in_base_table.ingest_timestamp_column_name||""" > timestamp_sub('"""||max_ingest_ts||"""', interval 100 minute)
         )
       )
     """ into base_table_partitions;
