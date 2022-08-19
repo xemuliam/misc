@@ -17,7 +17,7 @@ begin
 
   execute immediate """
     select ifnull(any_value(option_value), '')
-    from `"""||table_info.dataset_name||""".information_schema.table_options`
+    from `"""||table_info.dataset_name||""".INFORMATION_SCHEMA.TABLE_OPTIONS`
     where table_name = '"""||table_info.table_name||"""'
       and option_name = 'labels'
   """ into get_labels;
