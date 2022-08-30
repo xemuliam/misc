@@ -15,11 +15,8 @@ begin
 
   set labels = (
     select array(
-      select as struct l.*
-      from unnest(labels) l
-      where name not in (
-        select name from unnest(_in_labels_array)
-      )
+      select as struct l.* from unnest(labels) l
+      where name not in (select name from unnest(_in_labels_array))
     ) || _in_labels_array
   );
 
