@@ -58,7 +58,7 @@ begin
     execute immediate """
       select (-1,
         (
-          select array_agg(distinct date("""||_in_base_table.partition_column_name||"""))
+          select array_agg(distinct date("""||_in_base_table.partition_column_name||""") ignore nulls)
           from `"""||_in_base_table.table_name||"""`
           where true"""||ifnull( " and "||_in_base_table.additional_filter_condition, '')||"""
             and """||_in_base_table.ingest_timestamp_column_name||""" > timestamp_sub('"""||max_ingest_ts||"""', interval 100 minute)
