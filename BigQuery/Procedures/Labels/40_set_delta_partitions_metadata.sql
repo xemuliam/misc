@@ -1,4 +1,4 @@
-create or replace procedure set_many_table_labels (
+create or replace procedure set_delta_partitions_metadata (
   _in_table_name string,
   _in_last_batch_start_ts timestamp,
   _in_max_ingest_ts timestamp
