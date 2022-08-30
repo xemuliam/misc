@@ -1,4 +1,4 @@
-create or replace procedure parse_table_name (
+create or replace procedure parse_table_name(
   _in_table_name string,
   
   out _out_table_struct struct<
