@@ -17,11 +17,8 @@ begin
 
   set _out_labels_array = (
     select array(
-      select as struct l.*
-      from unnest(labels) l
-      where name in (
-        select n from unnest(_in_label_names_array) n
-      )
+      select as struct l.* from unnest(labels) l
+      where name in (select n from unnest(_in_label_names_array) n)
     )
   );
 end
