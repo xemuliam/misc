@@ -6,10 +6,10 @@ begin
   declare names_array default (select array_reverse(split(replace(_in_table_name, '`', ''), '.')));
 
   set table_name = nullif(names_array[safe_ordinal(1)], '');
-  set dataset_name = ifnull(nullif(names_array[safe_ordinal(3)], '')||'.', '') || nullif(names_array[safe_ordinal(2)], '');
+  set dataset_name = ifnull(names_array[safe_ordinal(3)], @@project_id)||'.'||nullif(names_array[safe_ordinal(2)], '');
 
   assert (table_name is not null and dataset_name is not null)
-    as 'dataset name or table name is missing';
+    as 'Dataset name or table name is missing';
 
   set _out_table_struct = (dataset_name, table_name);
 end
