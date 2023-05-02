@@ -7,15 +7,15 @@ begin
 
   call parse_table_name(_in_table_name, table_info);
 
-  execute immediate """"""
+  execute immediate """
     select ifnull(any_value(option_value), '')
-    from `""""""||table_info.dataset_name||"""""".INFORMATION_SCHEMA.TABLE_OPTIONS`
-    where table_name = '""""""||table_info.table_name||""""""'
-      and option_name = 'labels'""""""
+    from `"""||table_info.dataset_name||""".INFORMATION_SCHEMA.TABLE_OPTIONS`
+    where table_name = '"""||table_info.table_name||"""'
+      and option_name = 'labels'"""
     into get_labels;
 
   if length(get_labels) > 0 then
-    execute immediate ""select "" || get_labels into _out_labels_array;
+    execute immediate "select " || get_labels into _out_labels_array;
   else
     set _out_labels_array = [];
   end if;
