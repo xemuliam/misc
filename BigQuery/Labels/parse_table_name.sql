@@ -5,11 +5,11 @@ begin
   declare dataset_name, table_name string default null;
   declare names_array default (select array_reverse(split(replace(_in_table_name, '`', ''), '.')));
 
-  set table_name = nullif(names_array[safe_ordinal(1)], '');
-  set dataset_name = ifnull(names_array[safe_ordinal(3)], @@project_id)||'.'||nullif(names_array[safe_ordinal(2)], '');
+  set _out_table_struct = (
+    ifnull(nullif(names_array[safe_ordinal(3)], ''), @@project_id)||'.'||nullif(names_array[safe_ordinal(2)], ''),
+    nullif(names_array[safe_ordinal(1)], '')
+  );
 
-  assert (table_name is not null and dataset_name is not null)
+  assert (_out_table_struct.dataset_name||_out_table_struct.table_name is not null)
     as 'Dataset name or table name is missing';
-
-  set _out_table_struct = (dataset_name, table_name);
-end
+end;
