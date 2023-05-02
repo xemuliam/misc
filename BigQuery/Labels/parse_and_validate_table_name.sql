@@ -14,5 +14,5 @@ begin
   execute immediate """
     assert @cond as
       'Table \""""||_in_table_name||"\" not found'"
-  using _out_table_struct.dataset_name||_out_table_struct.table_name is not null as cond;
+  using _out_table_struct.table_name is not null as cond;
 end
