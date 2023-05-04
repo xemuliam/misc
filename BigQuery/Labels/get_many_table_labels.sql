@@ -1,6 +1,16 @@
-create procedure get_many_table_labels(_in_table_name string, _in_label_names_array array<string>, out _out_labels_array array<struct<name string, value string>>)
-options(
-  strict_mode=false)
+create procedure get_many_table_labels(
+  _in_table_name string,
+  _in_label_names_array array<string>,
+  
+  out _out_labels_array
+    array<
+      struct<
+        name string,
+        value string
+      >
+    >
+)
+options(strict_mode=false)
 begin
   declare labels array<struct<name string, value string>> default null;
 
