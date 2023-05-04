@@ -1,6 +1,10 @@
-create procedure get_table_label(_in_table_name string, _in_label_name string, out _out_label_value string)
-options(
-  strict_mode=false)
+create procedure get_table_label(
+  _in_table_name string,
+  _in_label_name string,
+  
+  out _out_label_value string
+)
+options(strict_mode=false)
 begin
   declare labels array<struct<name string, value string>> default [];
 
