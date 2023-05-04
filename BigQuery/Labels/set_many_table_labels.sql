@@ -1,6 +1,14 @@
-create procedure set_many_table_labels(_in_table_name string, _in_labels_array array<struct<name string, value string>>)
-options(
-  strict_mode=false)
+create procedure set_many_table_labels(
+  _in_table_name string,
+  _in_labels_array
+    array<
+      struct<
+        name string,
+        value string
+      >
+    >
+)
+options(strict_mode=false)
 begin
   declare labels array<struct<name string, value string>> default [];
   declare table_struct STRUCT<dataset_name STRING, table_name STRING> default null;
