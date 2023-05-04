@@ -16,8 +16,8 @@ create procedure get_delta_date_partitions_filter_src(
 )
 options(strict_mode=false)
 begin
-  call get_delta_date_partitions_ext(
-    (_in_tgt.table_name, _in_tgt.event_timestamp_column_name, null, null, null),
+  call get_delta_date_partitions_filter_src_custom_labels(
+    (_in_tgt.table_name, _in_tgt.event_timestamp_column_name, 'last-job-start', 'max-tgt-ts'),
     _in_src,
     _out_partitions_struct
   );
