@@ -1,6 +1,9 @@
-create procedure check_full_refresh(_in_table_name string, out _out_do_full_refresh bool)
-options(
-  strict_mode=false)
+create procedure check_full_refresh(
+  _in_table_name string,
+  
+  out _out_do_full_refresh bool
+)
+options(strict_mode=false)
 begin
   declare full_refresh_str string default false;
 
