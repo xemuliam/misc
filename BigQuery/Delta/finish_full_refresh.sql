@@ -1,6 +1,7 @@
-create procedure finish_full_refresh(_in_table_name string)
-options(
-  strict_mode=false)
+create procedure finish_full_refresh(
+  _in_table_name string
+)
+options(strict_mode=false)
 begin
   call set_table_label(
     _in_table_name,
