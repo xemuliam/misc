@@ -1,10 +1,24 @@
-create procedure get_delta_partitions_metadata_custom_labels(_in_table_name string, _in_last_job_start_label_name string, _in_max_tgt_ts_label_name string, out _out_delta_metadata_struct struct<last_job_start struct<name string, value timestamp>, max_tgt_ts struct<name string, value timestamp>>)
-options(
-  strict_mode=false)
+create procedure get_delta_date_partitions_metadata_custom_labels(
+  _in_table_name string,
+  _in_last_job_start_label_name string,
+  _in_max_tgt_ts_label_name string,
+  
+  out _out_delta_metadata_struct struct<
+    last_job_start struct<
+      name string,
+      value timestamp
+    >,
+    max_tgt_ts struct<
+      name string,
+      value timestamp
+    >
+  >
+)
+options(strict_mode=false)
 begin
   declare delta_metadata_struct struct<last_job_start array<struct<name string, value timestamp>>, max_tgt_ts array<struct<name string, value timestamp>>>;
 
-  call get_delta_partitions_metadata_ext(
+  call get_delta_date_partitions_metadata_ext(
     _in_table_name,
     [_in_last_job_start_label_name],
     [_in_max_tgt_ts_label_name],
