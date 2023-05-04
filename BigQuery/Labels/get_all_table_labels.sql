@@ -1,6 +1,15 @@
-create procedure get_all_table_labels(_in_table_name string, out _out_labels_array array<struct<name string, value string>>)
-options(
-  strict_mode=false)
+create procedure get_all_table_labels(
+  _in_table_name string,
+  
+  out _out_labels_array
+    array<
+      struct<
+        name string,
+        value string
+      >
+    >
+)
+options(strict_mode=false)
 begin
   declare table_info struct<dataset_name string, table_name string>;
   declare get_labels default '';
