@@ -1,6 +1,23 @@
-create procedure get_delta_partitions_ext(_in_tgt struct<table_name string, event_timestamp_column_name string, additional_filter_condition string, last_job_start_name string, max_tgt_ts_name string>, _in_src struct<table_name string, event_timestamp_column_name string, additional_filter_condition string>, out _out_partitions_struct struct<max_tgt_ts timestamp, dates array<date>>)
-options(
-  strict_mode=false)
+create procedure get_delta_date_partitions_ext(
+  _in_tgt struct<
+    table_name string,
+    event_timestamp_column_name string,
+    additional_filter_condition string,
+    last_job_start_name string,
+    max_tgt_ts_name string
+  >,
+  _in_src struct<
+    table_name string,
+    event_timestamp_column_name string,
+    additional_filter_condition string
+  >,
+  
+  out _out_partitions_struct struct<
+    max_tgt_ts timestamp,
+    dates array<date>
+  >
+)
+options(strict_mode=false)
 begin
   declare max_tgt_ts, last_job_start timestamp default null;
   declare src_partition_column_name string;
