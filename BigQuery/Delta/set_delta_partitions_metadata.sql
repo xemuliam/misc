@@ -5,7 +5,7 @@ create procedure set_delta_date_partitions_metadata(
 )
 options(strict_mode=false)
 begin
-  call set_delta_date_partitions_metadata_custom_labels(
+  call set_delta_partitions_metadata_custom_labels(
     _in_table_name,
     ('last-job-start', _in_current_job_start),
     ('max-tgt-ts', _in_max_tgt_ts)
