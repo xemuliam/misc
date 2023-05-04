@@ -1,6 +1,13 @@
-create procedure parse_and_validate_table_name(_in_table_name string, out _out_table_struct struct<dataset_name string, table_name string>)
-options(
-  strict_mode=false)
+create procedure parse_and_validate_table_name(
+  _in_table_name string,
+  
+  out _out_table_struct
+    struct<
+      dataset_name string,
+      table_name string
+    >
+)
+options(strict_mode=false)
 begin
   declare names_array default (select array_reverse(split(replace(_in_table_name, '`', ''), '.')));
 
