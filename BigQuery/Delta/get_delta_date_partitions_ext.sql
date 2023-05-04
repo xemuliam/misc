@@ -26,13 +26,13 @@ begin
   declare delta_metadata struct<last_job_start struct<name string, value timestamp>, max_tgt_ts struct<name string, value timestamp>>;
 
   -- parse src table name into structure
-  call US.parse_table_name(
+  call parse_table_name(
     _in_src.table_name,
     src
   );
 
   -- get delta partitions metadata
-  call US.get_delta_partitions_metadata_custom_labels(
+  call get_delta_date_partitions_metadata_custom_labels(
     _in_tgt.table_name,
     ifnull(nullif(_in_tgt.last_job_start_name, ''), 'last-job-start'),
     ifnull(nullif(_in_tgt.max_tgt_ts_name, ''), 'max-tgt-ts'),
