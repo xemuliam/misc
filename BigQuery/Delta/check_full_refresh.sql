@@ -5,7 +5,7 @@ create procedure check_full_refresh(
 )
 options(strict_mode=false)
 begin
-  declare full_refresh_str string default false;
+  declare full_refresh_str string default null;
 
   call get_table_label(
     _in_table_name, 'full-refresh', full_refresh_str
