@@ -4,7 +4,7 @@ create or replace procedure begin_full_refresh(
 options (strict_mode=false)
 begin
   call set_table_label(
-    _in_table_name string,
+    _in_table_name,
     'full-refresh-started',
     'true'
   );
