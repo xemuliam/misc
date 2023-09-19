@@ -1,7 +1,7 @@
-CREATE OR REPLACE PROCEDURE do_full_refresh(
-  _in_table_name STRING
+create or replace procedure do_full_refresh(
+  _in_table_name string
 )
-OPTIONS (strict_mode=false)
+options (strict_mode=false)
 begin
   call set_table_label(
     _in_table_name,
