@@ -24,6 +24,8 @@ begin
   declare src_partitions struct<count_all int64, dates array<date>>;
   declare src struct<dataset_name string, table_name string>;
   declare delta_metadata struct<last_job_start struct<name string, value timestamp>, max_tgt_ts struct<name string, value timestamp>>;
+  declare is_err bool;
+  declare i default 0;
 
   -- parse src table name into structure
   call parse_table_name(
@@ -60,14 +62,25 @@ begin
 
   -- get partitions from metadata using last job either last job start label (if available)
   -- or max tgt timestamp calculated on previous step minus streaming buffer length
-  execute immediate """
-    select (count(1), array_agg(
-      coalesce(safe.parse_date('%Y', partition_id), safe.parse_date('%Y%m', partition_id), safe.parse_date('%Y%m%d', partition_id))
-      ignore nulls))
-    from `"""||src.dataset_name||""".INFORMATION_SCHEMA.PARTITIONS`
-    where table_name = '"""||src.table_name||"""'
-    and last_modified_time > '"""||ifnull(delta_metadata.last_job_start.value, timestamp_sub(max_tgt_ts, interval 100 minute))||"""'
-  """ into src_partitions;
+  -- if read attempt is unsuccessful (because of known issue with reading partitions metadata
+  -- while any table is being dropped from the same dataset at the same time) then use up to 5 attempts to read
+  repeat
+    begin
+      set is_err = false;
+        execute immediate """
+          select (count(1), array_agg(
+            coalesce(safe.parse_date('%Y', partition_id), safe.parse_date('%Y%m', partition_id), safe.parse_date('%Y%m%d', partition_id))
+            ignore nulls))
+          from `"""||src.dataset_name||""".INFORMATION_SCHEMA.PARTITIONS`
+          where table_name = '"""||src.table_name||"""'
+          and last_modified_time > '"""||ifnull(delta_metadata.last_job_start.value, timestamp_sub(max_tgt_ts, interval 100 minute))||"""'
+        """ into src_partitions;
+    exception when error then
+      set is_err = true;
+      set i = i + 1;
+    end;
+    until not err or i = 5
+  end repeat;
 
   -- get partitions from real data either if we have filter for src
   -- or if we can't identifiy exact partitions list from metadata

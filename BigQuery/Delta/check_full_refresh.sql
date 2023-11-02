@@ -5,15 +5,5 @@ create procedure check_full_refresh(
 )
 options(strict_mode=false)
 begin
-  declare full_refresh_str string default null;
-
-  call get_table_label(
-    _in_table_name, 'full-refresh', full_refresh_str
-  );
-  
-  if full_refresh_str = 'true' then
-    set _out_do_full_refresh = true;
-  else
-    set _out_do_full_refresh = false;
-  end if;
+  call should_full_refresh(_in_table_name, _out_do_full_refresh);
 end
