@@ -66,7 +66,7 @@
     {% endfor %}
   {% endfor %}
 
-  {# ========== Working with databse ========== #}
+  {# ========== Working with database ========== #}
 
   {# Call adapter copy_table function(s) #}
   {% if ns.single_copy %}
