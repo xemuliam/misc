@@ -101,6 +101,8 @@
 
   {# Clean up #}
   {{ run_hooks(post_hooks) }}
+  {%- do apply_grants(target_relation, grant_config) -%}
+  {{- adapter.commit() -}}
 
   {{ return({'relations': [destination]}) }}
 {%- endmaterialization %}
