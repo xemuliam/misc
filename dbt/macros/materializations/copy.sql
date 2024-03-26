@@ -24,6 +24,11 @@
       if 0 <= model.raw_code.find('ref(') <= model.raw_code.find('source(')
       else src_array + ref_array %}
 
+  {# Check whether we have at least one realtion to work with #}
+  {%- if relations_array | length == 0 -%}
+    {{ exceptions.raise_compiler_error('No relation found in model SQL to copy data from') }}
+  {%- endif -%}
+
   {# ========== Compatibility checks ========== #}
   {% set ns = namespace(single_copy=true, base_col_list=[]) %}
 
