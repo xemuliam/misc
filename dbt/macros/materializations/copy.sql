@@ -8,6 +8,7 @@
   {% set incremental_existing_target = copy_materialization == 'incremental' and relation_exists(destination) %}
 
   {# ========== Create list of relations from model SQL ========== #}
+
   {% set ref_array = [] %}
   {% for ref_table in model.refs %}
     {{ ref_array.append(ref(ref_table.get('package'), ref_table.name, version=ref_table.get('version'))) }}
@@ -30,70 +31,82 @@
   {%- endif -%}
 
   {# ========== Compatibility checks ========== #}
-  {% set ns = namespace(single_copy=true, base_col_list=[]) %}
 
-  {# Determine relations comparison base  #}
+  {% set ns = namespace(single_copy=true) %}
+
+  {# Determine relations comparison base #}
+  {% set base_col_list = [] %}
   {% if incremental_existing_target %}
     {% for col in adapter.get_columns_in_relation(destination) %}
-      {{ ns.base_col_list.extend(col.flatten() | map('string') | list) }}
+      {{ base_col_list.extend(col.flatten() | map('string') | list) }}
     {% endfor %}
     {% set comp_rel_index = 0 %}
+
+    {% set first_col_list=[] %}
+    {% for col in adapter.get_columns_in_relation(relations_array[0]) %}
+      {{ first_col_list.extend(col.flatten() | map('string') | list) }}
+    {% endfor %}
   {% else %}
     {% for col in adapter.get_columns_in_relation(relations_array[0]) %}
-      {{ ns.base_col_list.extend(col.flatten() | map('string') | list) }}
+      {{ base_col_list.extend(col.flatten() | map('string') | list) }}
     {% endfor %}
     {% set comp_rel_index = 1 %}
   {% endif %}
 
-  {# Compare all required relations with defined base #}
+  {# Check table structure for all relations #}
   {% for rel in relations_array[comp_rel_index:] %}
     {% set comp_col_list=[] %}
     {% for col in adapter.get_columns_in_relation(rel) %}
       {{ comp_col_list.extend(col.flatten() | map('string') | list) }}
     {% endfor %}
 
-  {# Determine if possible to have single copy statement for all realtions #}
-    {% if ns.single_copy and ns.base_col_list | sort != comp_col_list | sort %}
-      {% set ns.single_copy = false %}
-    {% endif %}
-
-  {# Compare all realtions structure with base and raise exception if don't fit #}
+    {# Compare realtion structure with base and raise exception if it doesn't fit #}
     {% for col in comp_col_list %}
-      {% if not col in ns.base_col_list %}
+      {% if not col in base_col_list %}
         {{ exceptions.raise_compiler_error("Incompatible tables structure. " ~ col ~ " from  " ~ rel ~
-          " doesn't match with " ~ destination if incremental_existing_target else relations_array[0]) }}
+          " doesn't match with " ~ (destination if incremental_existing_target else relations_array[0])) }}
       {%endif%}
     {% endfor %}
+
+    {# Determine if possible to have single copy statement for all realtions #}
+    {% if ns.single_copy and comp_col_list | sort != (first_col_list | sort if incremental_existing_target else base_col_list | sort) %}
+      {% set ns.single_copy = false %}
+    {% endif %}
   {% endfor %}
 
   {# ========== Working with database ========== #}
 
-  {# Call adapter copy_table function(s) #}
   {% if ns.single_copy %}
+    {# Call adapter copy_table function to put information into destination using all relations as source #}
     {%- set result_str = adapter.copy_table(
         relations_array, destination, copy_materialization) -%}
     {{ store_result('main', response=result_str) }}
   {% else %}
+    {# Create relation for interim table #}
     {%- set interim_dest = api.Relation.create(
         database=config.get('interim_database', default = this.database),
         schema=config.get('interim_schema', default = this.schema),
         identifier=this.name + '__dbt_tmp_' + local_md5(modules.datetime.datetime.now() | string)
     ) -%}
 
+    {# Create interim table to put information there sequentially #}
     {%- call statement('main') %}
       create table {{ interim_dest }}
       like {{ destination if incremental_existing_target else relations_array[0] }};
     {%- endcall %}
 
+    {# Call adapter copy_table function to append information into interim table sequentially for all relations #}
     {% for rel in relations_array %}
       {%- set result_str = adapter.copy_table(rel, interim_dest, 'incremental') -%}
       {{ store_result('main', response=result_str) }}
     {% endfor %}
 
+    {# Call adapter copy_table function to put information into destination using interim table as source #}
     {%- set result_str = adapter.copy_table(
       interim_dest, destination, copy_materialization) -%}
     {{ store_result('main', response=result_str) }}
 
+    {# Drop interim table #}
     {%- call statement('main') %}
       drop table if exists {{ interim_dest }};
     {%- endcall %}
