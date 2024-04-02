@@ -69,7 +69,7 @@
     {{ target_col_list.extend(col.flatten() | map('string') | list) }}
   {% endfor %}
 
-  {# Loop over all realstions to made checks #}
+  {# Loop over all relations to make compatibility checks and distribute relations by groups #}
   {% for rel in relations_array[0 if incremental_existing_target else 1:] %}
     {# Determine flattened (to cover nested columns) table structure from relation need to be checked #}
     {% set comp_col_list=[] %}
