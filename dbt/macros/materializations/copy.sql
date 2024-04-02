@@ -1,4 +1,4 @@
-{% materialization copy, adapter='bigquery' -%}
+{% materialization copy_new, adapter='bigquery' -%}
 
   {# Setup #}
   {{ run_hooks(pre_hooks) }}
@@ -7,19 +7,37 @@
   {% set destination = this.incorporate(type='table') %}
   {% set incremental_existing_target = copy_materialization == 'incremental' and relation_exists(destination) %}
 
-  {# ========== Create list of relations from model SQL ========== #}
+  {# ========== Create and check list of relations from model SQL ========== #}
 
-  {# Create refs list #}
+  {% set not_table_rel_array = [] %}
+
+  {# Create and check refs list #}
   {% set ref_array = [] %}
   {% for ref_table in model.refs %}
-    {{ ref_array.append(ref(ref_table.get('package'), ref_table.name, version=ref_table.get('version'))) }}
+    {% set ref_rel = ref(ref_table.get('package'), ref_table.name, version=ref_table.get('version')) %}
+    {% if adapter.get_relation(ref_rel.database, ref_rel.schema, ref_rel.name).is_table %}
+      {{ ref_array.append(ref_rel) }}
+    {% else %}
+      {{ not_table_rel_array.append(ref_rel.name) }}
+    {% endif %}
   {% endfor %}
 
-  {# Create sources list #}
+  {# Create and check sources list #}
   {% set src_array = [] %}
   {% for src_table in model.sources %}
-    {{ src_array.append(source(*src_table)) }}
+    {% set src_rel = source(*src_table) %}
+    {% if adapter.get_relation(src_rel.database, src_rel.schema, src_rel.name).is_table %}
+      {{ src_array.append(src_rel) }}
+    {% else %}
+      {{ not_table_rel_array.append(src_rel.name) }}
+    {% endif %}
   {% endfor %}
+
+  {# Check whether all realetions are tables #}
+  {%- if not_table_rel_array | length > 0 -%}
+    {{ exceptions.raise_compiler_error('Only tables are allowed. Please revise following relation(s): ' ~
+      not_table_rel_array | join(', ')) }}
+  {%- endif -%}
 
   {# Create all relations list starting from first relation in model SQL #}
   {% set relations_array = [] %}
@@ -37,8 +55,7 @@
   {% set ns = namespace(is_matched_with_any_group=false) %}
 
   {# Determine relations groups list. Each group will be performed as single copy job #}
-  {% set rel_grp_list=[[]] %}
-  {{ rel_grp_list[0].extend([relations_array[0]]) }}
+  {% set rel_grp_list = [[relations_array[0]]] %}
 
   {# Determine columns groups list. Contains unique columns lists across all model relations #}
   {% set col_grp_list=[[]] %}
@@ -114,7 +131,8 @@
     {# Create empty interim table using appropriate table tructure and metadata #}
     {%- call statement('main') %}
       create table {{ interim_dest }}
-      like {{ destination if incremental_existing_target else relations_array[0] }};
+      like {{ destination if incremental_existing_target else relations_array[0] }}
+      options(expiration_timestamp = timestamp_add(current_timestamp, interval 6 hour));
     {%- endcall %}
   {% endif %}
 
