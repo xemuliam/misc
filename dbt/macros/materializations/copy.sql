@@ -85,7 +85,7 @@
       {%endif%}
     {% endfor %}
 
-    [# Maintain relations groups  #]
+    {# Maintain relations groups  #}
     {% set rel_index =  loop.index - (1 if incremental_existing_target else 0) %}
     
     {# Skip first realtion because it's alredy added into relations and columns groups #}
