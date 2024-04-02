@@ -1,4 +1,4 @@
-{% materialization copy_new, adapter='bigquery' -%}
+{% materialization copy, adapter='bigquery' -%}
 
   {# Setup #}
   {{ run_hooks(pre_hooks) }}
