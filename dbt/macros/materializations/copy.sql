@@ -149,9 +149,7 @@
     {{ store_result('main', response=result_str) }}
 
     {# Drop interim table #}
-    {%- call statement('main') %}
-      drop table if exists {{ interim_dest }};
-    {%- endcall %}
+    {{ drop_relation_if_exists(interim_dest) }}
   {% endif %}
 
   {# Clean up #}
