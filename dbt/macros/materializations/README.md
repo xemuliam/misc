@@ -1,3 +1,51 @@
+### Script materialisation
+
+This materializations allows to execute free-form SQL script as DBT model. Thus now you are not limited by just SELECT staement inside the model 😉
+It is really helpful if you need to perform e.g. stored procedure call or atomic insert or atomic update.
+Or if you want to run realy complex SQL script with complex logic expressed by many statements and variables.
+
+***Additional benefit:*** using script materialization you can eliminate DBT limitation "each target DB table must be addressed by one and only DBT model"
+
+Example:
+```sql
+{{ config(
+    materialized='script',
+)}}
+
+declare test_val default 123;
+
+insert into {{ source('sandbox', 'dml_first') }}
+values (
+  'test script', 1, 1.0, current_timestamp
+);
+
+update {{ ref('dml_first') }}
+set field2f = 1.01
+where true
+  -- and 1/0
+  and field0s = 'test script'
+```
+
+
+**Important:**
+Whereas script could affect many tables inside, this materialization returns empty target relation. Thus if you need to have dependency on script model then you must [force denedency](https://docs.getdbt.com/reference/dbt-jinja-functions/ref#forcing-dependencies):
+```sql
+{{ config(
+    materialized='script',
+)}}
+
+-- depends_on: {{ ref('script_0') }}
+
+truncate table {{ ref('dml_first') }};
+
+insert into {{ source('sandbox', 'dml_first') }}
+values (
+  'test script 999', 999, 999.0, current_timestamp
+)
+```
+
+---
+
 ### Copy materialisation
 
 This new copy materialization allows to make union-all-like operation even in case different (but compatible with target) structures w/o any additional efforts from developer side.
@@ -62,4 +110,4 @@ And here is the result:
 ![image](https://github.com/xemuliam/misc/assets/20856221/d067d3e6-b724-447d-9cf1-499b3ead22e8)
 
 Here you can see compatibility check for above tables:
-![image](https://github.com/xemuliam/misc/assets/20856221/013074b3-86ee-45f0-9b14-f285af8559e9)
+![image](https://github.com/xemuliam/misc/assets/20856221/e2d88a9b-0728-4a9b-9eb8-07fe24f94efb)
