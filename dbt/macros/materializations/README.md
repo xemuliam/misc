@@ -1,12 +1,16 @@
-### Script materialisation
+## Script materialisation
 
 This materializations allows to execute free-form SQL script as DBT model. Thus now you are not limited by just SELECT staement inside the model 😉
 It is really helpful if you need to perform e.g. stored procedure call or atomic insert or atomic update.
 Or if you want to run realy complex SQL script with complex logic expressed by many statements and variables.
 
-***Additional benefit:*** using script materialization you can eliminate DBT limitation "each target DB table must be addressed by one and only DBT model"
+**Additional benefit:**
+by using script materialization you can eliminate major DBT limitation 
 
-Example:
+**_"each target DB table must be addressed by one and only DBT model"_**
+
+
+<ins>Example:</ins>
 ```sql
 {{ config(
     materialized='script',
@@ -27,7 +31,7 @@ where true
 ```
 
 
-**Important:**
+### !!! Important !!!
 Whereas script could affect many tables inside, this materialization returns empty target relation. Thus if you need to have dependency on script model then you must [force denedency](https://docs.getdbt.com/reference/dbt-jinja-functions/ref#forcing-dependencies):
 ```sql
 {{ config(
@@ -46,11 +50,12 @@ values (
 
 ---
 
-### Copy materialisation
+
+## Copy materialisation
 
 This new copy materialization allows to make union-all-like operation even in case different (but compatible with target) structures w/o any additional efforts from developer side.
 
-#### Features:
+### Features:
 - implements BigQuery copy API
 - implements "fail fast" approach. maximum number of checks will be performed on DBT side, w/o touching database
 - checks if there is at least one relation in model and raise compilation error if not
@@ -69,7 +74,7 @@ This new copy materialization allows to make union-all-like operation even in ca
 - able to rewrite individual target partitions instead of full table
 
 
-#### Materialization parametes list with acceptable values:
+### Materialization parametes list with acceptable values:
 - **copy_materialization:** rewrite or append data to target table. Possible values are `table` and `incremental`. Default value if not defined is `table`
 - **interim_database:** desired BigQuery project to store interim table, Model project will be in use if not defined. If not defined then model project will be in use.
 - **interim_schema:** desired BigQuery dataset to store imterim table, If not defined then model dataset will be in use.
