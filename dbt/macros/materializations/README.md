@@ -1,4 +1,4 @@
-### New version of copy materialisation.
+### Copy materialisation
 
 This new copy materialization allows to make union-all-like operation even in case different (but compatible with target) structures w/o any additional efforts from developer side.
 
