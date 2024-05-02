@@ -6,6 +6,7 @@
   {% set copy_materialization = config.get('copy_materialization', default = 'table') %}
   {% set destination = this.incorporate(type='table') %}
   {% set incremental_existing_target = copy_materialization == 'incremental' and relation_exists(destination) %}
+  {% set copy_partitions = config.get('copy_partitions', default = false) if copy_materialization == 'table' else false %}
 
   {# ========== Create and check list of relations from model SQL ========== #}
 
@@ -35,7 +36,7 @@
 
   {# Check whether all realetions are tables #}
   {% if not_table_rel_array | length > 0 %}
-    {{ exceptions.raise_compiler_error('Only tables are allowed. Please revise following relation(s): ' ~
+    {{ exceptions.raise_compiler_error('Only existing tables are allowed. Please revise following relation(s): ' ~
       not_table_rel_array | join(', ')) }}
   {% endif %}
 
@@ -48,6 +49,11 @@
   {# Check whether we have at least one relation to work with #}
   {% if relations_array | length == 0 %}
     {{ exceptions.raise_compiler_error('No relation found in model SQL to copy data from') }}
+  {% endif %}
+
+  {# Check whether there is single relation for copy partitions #}
+  {% if copy_partitions and relations_array | length > 1 %}
+    {{ exceptions.raise_compiler_error('Only single relation supported for copy partitions') }}
   {% endif %}
 
   {# ========== Compatibility checks ========== #}
@@ -116,45 +122,77 @@
 
   {# ========== Working with database ========== #}
 
-  {# Determine whether we can have single copy statement for all relations #}
-  {% set single_copy = true if rel_grp_list | length == 1 else false %}
+  {% if copy_partitions %}
+    {# Retrieve partitions list from partitions metadata for copy partitions #}
+    {%- set partitions_get_sql %}
+      select partition_id
+      from {{ relations_array[0].database }}.{{ relations_array[0].schema }}.INFORMATION_SCHEMA.PARTITIONS
+      where table_name = '{{ relations_array[0].table }}'
+        and regexp_contains(partition_id, r'\d+')
+    {%- endset %}
 
-  {% if not single_copy %}
-    {# Create relation for interim table to put information there sequentially #}
-    {% set interim_dest = api.Relation.create(
-        database=config.get('interim_database', default = this.database),
-        schema=config.get('interim_schema', default = this.schema),
-        identifier=this.name + '__dbt_tmp_' + local_md5(modules.datetime.datetime.now() | string)
-    ) %}
+    {% set partitions = run_query(partitions_get_sql).columns[0].values() %}
+    {% if partitions | length == 0 %}
+      {{ exceptions.raise_compiler_error("Relation " ~ relations_array[0] ~ 
+        " has no partitions to be copied from") }}
+    {% endif %}
 
-    {# Create empty interim table using appropriate table tructure and metadata #}
-    {%- call statement('main') %}
-      create table {{ interim_dest }}
-      like {{ destination if incremental_existing_target else relations_array[0] }}
-      options(expiration_timestamp = timestamp_add(current_timestamp, interval 6 hour));
-    {%- endcall %}
-  {% endif %}
+    {% for partition in partitions %}
+      {% set copy_partitions_src_partition = api.Relation.create(
+        database=relations_array[0].database,
+        schema=relations_array[0].schema,
+        identifier=relations_array[0].table ~ '$' ~ partition
+      ) %}
+      {% set copy_partitions_tgt_partition = api.Relation.create(
+        database=destination.database,
+        schema=destination.schema,
+        identifier=destination.table ~ '$' ~ partition
+      ) %}
+      {% set result_str = adapter.copy_table(
+        copy_partitions_src_partition, copy_partitions_tgt_partition, copy_materialization) %}
+      {{ store_result('main', response=result_str) }}
+    {% endfor %}
+  {% else %}
+    {# Determine whether we can have single copy statement for all relations #}
+    {% set single_copy = true if rel_grp_list | length == 1 else false %}
 
-  {# Call adapter copy_table function for each relation group #}
-  {% for rel_grp in rel_grp_list %}
-    {% set result_str = adapter.copy_table(rel_grp, destination if single_copy else interim_dest,
-      copy_materialization if single_copy else 'incremental') %}
-    {{ store_result('main', response=result_str) }}
-  {% endfor %}
+    {% if not single_copy %}
+      {# Create relation for interim table to put information there sequentially #}
+      {% set interim_dest = api.Relation.create(
+          database=config.get('interim_database', default = this.database),
+          schema=config.get('interim_schema', default = this.schema),
+          identifier=this.name + '__dbt_tmp_' + local_md5(modules.datetime.datetime.now() | string)
+      ) %}
 
-  {% if not single_copy %}
-    {# Call adapter copy_table function to put information into destination using interim table as source #}
-    {% set result_str = adapter.copy_table(
-      interim_dest, destination, copy_materialization) %}
-    {{ store_result('main', response=result_str) }}
+      {# Create empty interim table using appropriate table tructure and metadata #}
+      {%- call statement('main') %}
+        create table {{ interim_dest }}
+        like {{ destination if incremental_existing_target else relations_array[0] }}
+        options(expiration_timestamp = timestamp_add(current_timestamp, interval 6 hour));
+      {%- endcall %}
+    {% endif %}
 
-    {# Drop interim table #}
-    {{ drop_relation_if_exists(interim_dest) }}
+    {# Call adapter copy_table function for each relation group #}
+    {% for rel_grp in rel_grp_list %}
+      {% set result_str = adapter.copy_table(rel_grp, destination if single_copy else interim_dest,
+        copy_materialization if single_copy else 'incremental') %}
+      {{ store_result('main', response=result_str) }}
+    {% endfor %}
+
+    {% if not single_copy %}
+      {# Call adapter copy_table function to put information into destination using interim table as source #}
+      {% set result_str = adapter.copy_table(
+        interim_dest, destination, copy_materialization) %}
+      {{ store_result('main', response=result_str) }}
+
+      {# Drop interim table #}
+      {{ drop_relation_if_exists(interim_dest) }}
+    {% endif %}
   {% endif %}
 
   {# Clean up #}
   {{ run_hooks(post_hooks) }}
-  {%- do apply_grants(target_relation, grant_config) -%}
+  {%- do apply_grants(destination, grant_config) -%}
   {{- adapter.commit() -}}
 
   {{ return({'relations': [destination]}) }}
