@@ -55,8 +55,13 @@ values (
 ## Copy materialisation
 
 BigQuery allows to easily [copy table data and metadata](https://cloud.google.com/bigquery/docs/managing-tables#copy-table) into different table.
+Copy operations will be performed as BigQuery COPY jobs using BigQuery storage API. It won't be like `create or replace table as select`. SQL enging won't be in use while data and metadata will be copied from one table to another. Moreover, COPY jobs are free of charge.
+
+I tested that by copying table with 2TB data inside. It was copied within 45 seconds in my environment. And again: it costed me nothing! Impressive, huh? 😜
+
+
 This materialisation implements BigQuery copy API and lets you perform:
-* target table can be appended or rewritten:
+* append or rewrite target table using:
     * copy single source table
     * copy multiple source tables
 * rewrite target partitons (not the whole table) by individual partitions exist in single source table
