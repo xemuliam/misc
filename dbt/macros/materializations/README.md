@@ -77,8 +77,8 @@ And it is able to rewrite nof only full target table but also only individual pa
 
 ### Materialization parametes list with acceptable values:
 - **copy_materialization:** rewrite or append data to target table. Possible values are `table` and `incremental`. Default value if not defined is `table`
-- **interim_database:** desired BigQuery project to store interim table, Model project will be in use if not defined. If not defined then model project will be in use.
-- **interim_schema:** desired BigQuery dataset to store imterim table, If not defined then model dataset will be in use.
+- **interim_database:** desired BigQuery project to store interim table (to process multiple sources with different structure). Model project will be in use if not defined.
+- **interim_schema:** desired BigQuery dataset to store interim table (to process multiple sources with different structure). If not defined then model dataset will be in use.
 - **copy_partitions:** rewrite only those target partitions which exist in source table. Possible values are `true` and `false`. If **copy_materialization** is `incremental` then this parameter will be ignored
 
 =========
