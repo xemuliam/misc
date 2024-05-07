@@ -1,9 +1,10 @@
 ## Script materialisation
 
 This materializations allows to execute free-form SQL script as DBT model. Thus now you are not limited by just single SELECT statement inside the model 😉
-It could be really helpful if you need to perform e.g. stored procedure call, or atomic insert, or atomic update.
-Or if you want to run really complex SQL script with logic expressed by many statements and variables.
-Or if you need to deal with late arriving data.
+
+It could be really helpful if you need to perform e.g. stored procedure call, or atomic insert, or atomic update. 
+Or if you want to run really complex SQL script with logic expressed by many statements and variables. 
+Or if you need to deal with late arriving data. 
 
 **Additional benefit:**
 by using script materialization you can eliminate major DBT limitation:
