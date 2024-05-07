@@ -6,9 +6,10 @@ Or if you want to run really complex SQL script with logic expressed by many sta
 Or if you need to deal with late arriving data.
 
 **Additional benefit:**
-by using script materialization you can eliminate major DBT limitation 
+by using script materialization you can eliminate major DBT limitation:
 
 **_"each target DB table must be addressed by one and only DBT model"_**
+
 That means you can have table model my_model and as many script models which are changing something in that model depending on your business requirements.
 
 <ins>Example:</ins>
