@@ -1,14 +1,15 @@
 ## Script materialisation
 
-This materializations allows to execute free-form SQL script as DBT model. Thus now you are not limited by just SELECT staement inside the model 😉
-It is really helpful if you need to perform e.g. stored procedure call or atomic insert or atomic update.
-Or if you want to run realy complex SQL script with complex logic expressed by many statements and variables.
+This materializations allows to execute free-form SQL script as DBT model. Thus now you are not limited by just single SELECT statement inside the model 😉
+It could be really helpful if you need to perform e.g. stored procedure call, or atomic insert, or atomic update.
+Or if you want to run really complex SQL script with logic expressed by many statements and variables.
+Or if you need to deal with late arriving data.
 
 **Additional benefit:**
 by using script materialization you can eliminate major DBT limitation 
 
 **_"each target DB table must be addressed by one and only DBT model"_**
-
+That means you can have table model my_model and as many script models which are changing something in that model depending on your business requirements.
 
 <ins>Example:</ins>
 ```sql
@@ -53,26 +54,16 @@ values (
 
 ## Copy materialisation
 
-This new copy materialization allows to make union-all-like operation even in case different (but compatible with target) structures w/o any additional efforts from developer side.
+BigQuery allows to easily [copy table data and metadata](https://cloud.google.com/bigquery/docs/managing-tables#copy-table) into different table.
+This materialisation implements BigQuery copy API and lets you perform:
+* target table can be appended or rewritten:
+    * copy single source table
+    * copy multiple source tables
+* rewrite target partitons (not the whole table) by individual partitions exist in single source table
 
-### Features:
-- implements BigQuery copy API
-- implements "fail fast" approach. maximum number of checks will be performed on DBT side, w/o touching database
-- checks if there is at least one relation in model and raise compilation error if not
-- checks whether all realtions are tables and raise compilation error if not
-- checks whether model relations have table structure compatible to target table and raise compilation error if not
-- checks wheter fully qualified relations are unique across all model relations (BQ copy API disallows usage more than one the same fully-qualified table as source) and raise compliation error if not
-- if all model relations have the same structure then single copy job will be initiated using full list of relations as source
-- if relations structures are different then to group model relations with similar structure to run single copy job per each group to minimize number of copy jobs. For example if we have 20 relations in model, 15 of them have similar structure, and rest 5 have also similar (bur different from those 15) structure then only 3 copy jobs will be performed (see below why 3 but not 2)
-- if we have more than one relations group then follwing steps will be performed:
-  - interim table will be created in models project and dataset (to put into different project and/or dataset please use `interim_database` and/or `interim_schema` config parameters). if `copy_materialization parameter` is `incremental` and target table exists then its structure will be in use to create interim table, otherwise table structure will be got from first relation in model
-  - series of copy jobs will be run sequentially to copy information from model relations groups into interim table
-  - copy job from interim table to target
-  - drop interim table
-- interim table is required to eliminate situation when we have sevel operations against target but not all of them will be successful. we perform several operations against interim table and then- single operation against target
-- interim table has unique name for each execution. this eliminates the isuue with fast reaching `table change per day` limit
-- able to rewrite individual target partitions instead of full table
 
+This materialization also allows to make union-all-like operation even in case different (but compatible with target) structures w/o any additional efforts from developer side.
+(see how it works on following screenshots)
 
 ### Materialization parametes list with acceptable values:
 - **copy_materialization:** rewrite or append data to target table. Possible values are `table` and `incremental`. Default value if not defined is `table`
