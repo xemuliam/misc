@@ -11,7 +11,7 @@ begin
   call get_many_table_labels(
     _in_table_name, ['full-refresh', 'full-refresh-started'], full_refresh_labels_arr
   );
-  
+
   set full_refresh_str = (
       select value from unnest(full_refresh_labels_arr) where name = 'full-refresh'
   );
@@ -19,10 +19,7 @@ begin
       select value from unnest(full_refresh_labels_arr) where name = 'full-refresh-started'
   );
 
-  if full_refresh_str = 'true' then
-    if full_refresh_started_str is null then
-      call set_table_label(_in_table_name, 'full-refresh-started', 'true');
-    end if;
+  if full_refresh_str = 'true' and full_refresh_started_str = 'true' then
     set _out_do_full_refresh = true;
   else
     set _out_do_full_refresh = false;
