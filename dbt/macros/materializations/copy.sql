@@ -75,6 +75,7 @@
     {# Determine flattened (to cover nested columns) table structure #}
     {{ target_col_list.extend(col.flatten() | map('string') | list) }}
   {% endfor %}
+  {% set target_col_list_icase = target_col_list | map('upper') | list %}
 
   {# Loop over all relations to make compatibility checks and distribute relations by groups #}
   {% for rel in relations_array[0 if incremental_existing_target else 1:] %}
@@ -85,10 +86,10 @@
 
     {# Relation structure must be subset of target structure to let copy works #}
     {% for col in comp_col_list %}
-      {% if not col in target_col_list %}
+      {% if not col | upper in target_col_list_icase %}
         {{ exceptions.raise_compiler_error("Incompatible tables structure. " ~ col ~ " from  " ~ rel ~
           " doesn't match with " ~ (destination if incremental_existing_target else relations_array[0])) }}
-      {%endif%}
+      {% endif %}
     {% endfor %}
 
     {# Maintain relations groups  #}
