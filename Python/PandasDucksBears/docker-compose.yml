@@ -1,0 +1,17 @@
+services:
+  battle:
+    # network_mode: none
+    image: python:3.11-slim
+    volumes:
+      - $PWD:/usr/app
+    command: >
+      sh -c '''
+      echo "Installing packages..." &&
+      pip install -q --root-user-action=ignore --disable-pip-version-check \
+        pandas duckdb polars pyarrow pytest seaborn &&
+      echo "Done." &&
+      echo "===============" &&
+      cd /usr/app &&
+      echo "Starting battle..." &&
+      python battle
+      '''
