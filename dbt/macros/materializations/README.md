@@ -100,7 +100,7 @@ Here is examples of model relations structures:
 Here is model example:
 ```sql
 {{ config(
-    materialized='copy_new',
+    materialized='copy',
     copy_materialization='incremental',
     interim_database='internal',
     interim_schema='test_dataset',
