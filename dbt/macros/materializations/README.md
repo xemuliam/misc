@@ -67,7 +67,7 @@ This materialisation implements BigQuery copy API and lets you perform:
 * append or rewrite target table using:
     * copy single source table
     * copy multiple source tables
-* rewrite target partitons (not the whole table) by individual partitions exist in single source table
+* rewrite target partitons (not the whole table) by several individual partitions exist in single source table
 
 
 This materialization also allows to make union-all-like operation even in case different (but compatible with target) structures w/o any additional efforts from developer side.
