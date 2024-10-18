@@ -84,14 +84,14 @@ begin
 
   -- get partitions from real data either if we have filter for src
   -- or if we can't identifiy exact partitions list from metadata
-  if ifnull(ltrim(rtrim(_in_src.additional_filter_condition)), '') <> '' or src_partitions.count_all > ifnull(nullif(array_length(src_partitions.dates), 0), -1) then
+  if ifnull(ltrim(rtrim(_in_src.additional_filter_condition)), '') <> '' or src_partitions.count_all > ifnull(array_length(src_partitions.dates), 0) then
     execute immediate """
       select (-1,
         (
           select array_agg(distinct date("""||src_partition_column_name||""") ignore nulls)
           from `"""||src.dataset_name||'.'||src.table_name||"""`
           where true"""||
-            if(src_partitions.count_all > ifnull(nullif(array_length(src_partitions.dates), 0), -1), '',
+            if(src_partitions.count_all > ifnull(array_length(src_partitions.dates), 0), '',
               ifnull(" and date("||src_partition_column_name||") in ("||
               (select string_agg("'"||d||"'", ', ') from unnest(src_partitions.dates) d)||")", ''))||
             ifnull(" and "||nullif(ltrim(rtrim(_in_src.additional_filter_condition)), ''), '')||"""
