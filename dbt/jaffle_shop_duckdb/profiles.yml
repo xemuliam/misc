@@ -1,0 +1,19 @@
+jaffle_shop_duckdb:
+
+  outputs:
+    dev:
+      type: duckdb
+      path: 'jaffle_shop.duckdb'
+      threads: 3
+
+    prod:
+      type: duckdb
+      threads: 25
+      extensions:
+        - postgres
+      attach:
+        - path: "postgresql://pstgrs_user:pstgrs_pswd@pstgrs:5432/postgres"
+          type: postgres
+          alias: pg_db
+
+  target: dev

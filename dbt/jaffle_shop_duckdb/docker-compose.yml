@@ -1,0 +1,27 @@
+services:
+  pstgrs:
+    image: postgres
+    environment:
+      POSTGRES_USER: pstgrs_user
+      POSTGRES_PASSWORD: pstgrs_pswd
+      POSTGRES_DB: pstgrs_db
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - '9876:5432'
+
+  dbt-duckdb:
+    depends_on:
+      - pstgrs
+    image: xemuliam/dbt:duckdb
+    ports:
+      - "8080:8080"
+    volumes:
+      - $PWD:/usr/app
+    command: >
+      sh -c '''
+        rm -f *.duckdb
+        # dbt clean
+        dbt run --target prod
+        # dbt docs generate
+        # dbt docs serve --host=0.0.0.0 && tail -f /dev/null
+      '''
