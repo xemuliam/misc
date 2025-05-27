@@ -33,6 +33,19 @@ where true
   and field0s = 'test script'
 ```
 
+### Bulk mode
+
+Also, I've added capability to run that script model in bulk or script mode. Some of data managem,ent systems don't allow scripting and run each individual statement from the script as separate independent query. Thus you have boolean config parameter `bulk` to control this behaviour.
+Default value of this pamater is `false`, which runs SQL from model as script and allows to mimic current bahaviour for call statements or run_query macro.
+However, if you need to switch this materialisation to bulk mode (run each statetemnt from inside as separete quey against your data management system), then just use this:
+
+```sql
+{{ config(
+    materialized='script',
+    bulk=True,
+)}}
+```
+
 
 ### !!! Important !!!
 Whereas script could affect many tables inside, this materialization returns empty target relation. Thus if you need to have dependency on script model then you must [force denedency](https://docs.getdbt.com/reference/dbt-jinja-functions/ref#forcing-dependencies):
