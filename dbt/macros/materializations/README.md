@@ -3,13 +3,14 @@
 This materializations allows to execute free-form SQL script as DBT model. Thus now you are not limited by just single SELECT statement inside the model 😉
 
 It could be really helpful if you need to perform e.g. stored procedure call, or atomic insert, or atomic update. 
+
 Or if you want to run really complex SQL script with logic expressed by many statements and variables. 
+
 Or if you need to deal with late arriving data. 
 
 **Additional benefit:**
-by using script materialization you can eliminate major DBT limitation:
+by using script materialization you can eliminate major DBT limitation: **"each target DB table must be addressed by _one and only_ DBT model"**
 
-**_"each target DB table must be addressed by one and only DBT model"_**
 
 That means you can have table model my_model and as many script models which are changing something in that model depending on your business requirements.
 
@@ -35,8 +36,10 @@ where true
 
 ### Bulk mode
 
-Also, I've added capability to run that script model in bulk or script mode. Some of data managem,ent systems don't allow scripting and run each individual statement from the script as separate independent query. Thus you have boolean config parameter `bulk` to control this behaviour.
+Also, I've added capability to run that script model in bulk or script mode. Some of data management systems don't allow scripting and run each individual statement from the script as separate independent query. Thus you have boolean config parameter `bulk` to control this behaviour.
+
 Default value of this pamater is `false`, which runs SQL from model as script and allows to mimic current bahaviour for call statements or run_query macro.
+
 However, if you need to switch this materialisation to bulk mode (run each statetemnt from inside as separete quey against your data management system), then just use this:
 
 ```sql
@@ -48,7 +51,7 @@ However, if you need to switch this materialisation to bulk mode (run each state
 
 
 ### !!! Important !!!
-Whereas script could affect many tables inside, this materialization returns empty target relation. Thus if you need to have dependency on script model then you must [force denedency](https://docs.getdbt.com/reference/dbt-jinja-functions/ref#forcing-dependencies):
+Whereas it allows to to use many scripting models against the same target table, and/or SQL could affect many tables inside, this materialization returns **empty** target relation. Thus if you need to have dependency on script model then you must [force denedency](https://docs.getdbt.com/reference/dbt-jinja-functions/ref#forcing-dependencies):
 ```sql
 {{ config(
     materialized='script',
