@@ -1,4 +1,4 @@
-{% macro run_query(sql, bulk=True) %}
+{% macro run_query(sql, bulk=False) %}
 
   {%- if bulk -%}
     {%- for query in sql.split(';') -%}
